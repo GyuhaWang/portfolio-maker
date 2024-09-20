@@ -1,101 +1,64 @@
-import Image from "next/image";
+'use client';
+import { GitHubUser, GitHubUserError } from '@/@types/githubModule';
+import { useRouter } from 'next/navigation';
+import { useState } from 'react';
+import { getGithubRepository, getGithubUser } from './action';
+import GitHubIcon from '@mui/icons-material/GitHub';
 
 export default function Home() {
-  return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      <main className="flex flex-col gap-8 row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="https://nextjs.org/icons/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="list-inside list-decimal text-sm text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-semibold">
-              src/app/page.tsx
-            </code>
-            .
-          </li>
-          <li>Save and see your changes instantly.</li>
-        </ol>
+	const [userName, setUserName] = useState('');
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="https://nextjs.org/icons/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:min-w-44"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
-        </div>
-      </main>
-      <footer className="row-start-3 flex gap-6 flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="https://nextjs.org/icons/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="https://nextjs.org/icons/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="https://nextjs.org/icons/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
-    </div>
-  );
+	const router = useRouter();
+	const handleSearchButton = async () => {
+		try {
+			await getGithubUser(userName)
+				.then(async (user) => {
+					if ((user as GitHubUserError).status == undefined) {
+						await getGithubRepository((user as GitHubUser).repos_url)
+							.then((repos) => {
+								router.push(`/${(user as GitHubUser).login}/read`);
+							})
+							.catch(() => window.alert('존재하지 않는 유저입니다.'));
+					} else throw Error;
+				})
+				.catch(() => window.alert('존재하지 않는 유저입니다.'));
+		} catch (e) {
+			window.alert('존재하지 않는 유저입니다.');
+		}
+	};
+
+	return (
+		<section className="h-screen w-screen flex flex-col ">
+			<header className="flex h-header w-full bg-white z-30 px-20 py-2  items-center justify-end">
+				<a href="/">
+					<GitHubIcon />
+				</a>
+			</header>
+			<div className=" flex flex-grow  items-center justify-center p-20 ">
+				<form
+					action={async () => {
+						await handleSearchButton();
+					}}
+					className="flex w-full items-center justify-center gap-10 py-4 px-8 rounded-full border-black border-2">
+					<label>
+						<input
+							type="submit"
+							hidden
+						/>
+						<button
+							className="text-nowrap"
+							onClick={async () => await handleSearchButton()}>
+							<GitHubIcon fontSize="large" />
+						</button>
+					</label>
+
+					<input
+						placeholder="gitHub아이디를 검색해보세요!"
+						onChange={(e) => setUserName(e.target.value)}
+						className="text-xl text-black outline-none w-full  "
+					/>
+				</form>
+			</div>
+		</section>
+	);
 }
