@@ -4,9 +4,12 @@ export async function getGithubUser(
 	name: string
 ): Promise<GitHubUser | GitHubUserError> {
 	try {
-		const user = await fetch(`http://localhost:3000/api/user?name=${name}`, {
-			cache: 'force-cache',
-		});
+		const user = await fetch(
+			`${process.env.NEXT_PUBLIC_BASE_URL}/api/user?name=${name}`,
+			{
+				cache: 'force-cache',
+			}
+		);
 		const userJson = await user.json();
 
 		if (userJson.status == '404') {
@@ -21,7 +24,7 @@ export async function getGithubUser(
 export async function getGithubRepository(url: string): Promise<Repository[]> {
 	try {
 		const repo = await fetch(
-			`http://localhost:3000/api/repository?url=${url}`,
+			`${process.env.NEXT_PUBLIC_BASE_URL}/api/repository?url=${url}`,
 			{ cache: 'force-cache' }
 		);
 		const repoJson = await repo.json();

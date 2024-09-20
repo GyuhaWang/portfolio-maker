@@ -5,6 +5,5 @@ export default function Layout({
 }: Readonly<{
 	children: React.ReactNode;
 }>) {
-	console.log('param', path);
 	return <main className="h-full w-screen">{children}</main>;
 }
