@@ -1,36 +1,34 @@
 import { GitHubUser } from '@/@types/githubModule';
-import {
-	getDBUserByName,
-	getGithubRepository,
-	getGithubUser,
-} from '@/app/action';
+import { getGithubRepository, getGithubUser } from '@/app/action';
 import UserInfoRead from '@/components/userInfo_read';
 import CareerRead from '@/components/career_read';
 import SkillRead from '@/components/skill_read';
 import Repositoryread from '@/components/project_read';
 import Header from '@/components/header';
-import { DBUserModule } from '@/@types/dbModule';
 
 export default async function Home({
 	params,
 }: {
-	params: { githubId: string };
+	params: { githubId: string; user: string };
 }) {
-	const dbuser = await getDBUserByName(params.githubId);
-	console.log(dbuser);
+	const gitHunUser = await getGithubUser(params.githubId);
+	const repositories = await getGithubRepository(
+		(gitHunUser as GitHubUser).repos_url
+	);
+
 	return (
 		<div className="flex flex-col ">
 			<Header type="read" />
 			<div className=" flex flex-col  gap-10 px-20 py-10">
 				<UserInfoRead
-					userInfo={dbuser as DBUserModule}
-					gitUser={false}
+					userInfo={gitHunUser as GitHubUser}
+					gitUser={true}
 				/>
-				<CareerRead careers={[]} />
-				<SkillRead skills={[]} />
+				{/* <CareerRead careers={[]} />
+				<SkillRead skills={[]} /> */}
 				<Repositoryread
-					repository={dbuser?.portfolio?.projects ?? []}
-					isGitUser={false}
+					repository={repositories}
+					isGitUser={true}
 				/>
 			</div>
 		</div>

@@ -4,7 +4,7 @@ export async function GET(req: NextRequest, res: NextResponse) {
 	try {
 		const searchParams = req.nextUrl.searchParams;
 		const url = searchParams.get('url');
-		const res = await fetch(url ?? '', { cache: 'force-cache' });
+		const res = await fetch(url ?? '', { next: { revalidate: 60 } });
 
 		return NextResponse.json(await res.json());
 	} catch (error) {

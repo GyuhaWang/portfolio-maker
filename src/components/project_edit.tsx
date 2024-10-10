@@ -1,41 +1,50 @@
 import { Repository } from '@/@types/githubModule';
 import { Language } from '@/@types/languageModule';
-import { ChangeEvent, useState } from 'react';
+import { ChangeEvent, useEffect, useState } from 'react';
 import Image from 'next/image';
 import { languageColors } from '@/data/languageColor';
 import HighlightOffIcon from '@mui/icons-material/HighlightOff';
+import usePortfolioStore from '@/zustand/usePortfolioStore';
+import { DBProjectModule, Stack } from '@/@types/dbModule';
+import { DateToInputDate } from '@/utils/format';
+import defaultImage from '/public/github.svg';
 
-const ProjectBox = ({ repo }: { repo: Repository }) => {
-	const [title, setTitle] = useState(repo.name);
-	const [description, setDescription] = useState(repo.description);
-	const [startDate, setStartDate] = useState(repo.created_at.split('T')[0]);
-	const [endDate, setEndDate] = useState(repo.updated_at.split('T')[0]);
-	const [gitUrl, setGitUrl] = useState(repo.html_url);
-	const [webUrl, setWebUrl] = useState(repo.homepage);
-	const [languages, setLanguages] = useState<Language[]>([]);
+const ProjectBox = ({ repo }: { repo: DBProjectModule }) => {
+	const { updateProject } = usePortfolioStore();
+	const [project, setProject] = useState<DBProjectModule>(repo);
+	const {
+		title,
+		description,
+		startDate,
+		updateDate,
+		gitUrl,
+		webUrl,
+		stacks,
+		hide,
+	} = project;
 	const [isEditing, setIsEditing] = useState(false);
-	const handleChange = (setter: any) => (e: ChangeEvent<HTMLInputElement>) => {
-		setter(e.target.value);
+
+	const handleChange = (e: ChangeEvent<any>) => {
+		const { value, name } = e.target;
+		setProject((prev) => {
+			return {
+				...prev,
+				[name]: value,
+			};
+		});
 	};
 	const handleClickEditing = () => {
 		setIsEditing((prev) => {
+			if (prev) {
+				updateProject(project);
+			}
 			return !prev;
 		});
 	};
-	const handleAddLanguage = (lang: Language) => {
-		if (
-			languages.find(
-				(val) => val.name == lang.name && val.color == val.color
-			) == undefined
-		) {
-			setLanguages((prev) => {
-				return [...prev, lang];
-			});
-		}
-	};
+	const handleAddLanguage = (lang: Language) => {};
 	const handleRemoveLanguage = (lang: Language) => {
-		const tmpLanguage = languages.filter((val) => val.name != lang.name);
-		setLanguages(tmpLanguage);
+		// const tmpLanguage = languages.filter((val) => val.name != lang.name);
+		// setLanguages(tmpLanguage);
 	};
 	return (
 		<div
@@ -47,7 +56,7 @@ const ProjectBox = ({ repo }: { repo: Repository }) => {
 				className="relative  h-[40%] w-full bg-white">
 				<Image
 					style={{ objectFit: 'cover' }}
-					src={'/svg/github.svg'}
+					src={defaultImage}
 					className={'rounded-t-lg'}
 					fill={true}
 					alt="project_img"
@@ -84,7 +93,8 @@ const ProjectBox = ({ repo }: { repo: Repository }) => {
 						<input
 							className="text-sm font-semibold w-full "
 							value={title}
-							onChange={handleChange(setTitle)}
+							name="title"
+							onChange={handleChange}
 						/>
 					</label>
 					<label className="flex items-center gap-1">
@@ -96,7 +106,8 @@ const ProjectBox = ({ repo }: { repo: Repository }) => {
 						<input
 							className="text-sm font-semibold w-full"
 							value={description ?? ''}
-							onChange={handleChange(setDescription)}
+							name="description"
+							onChange={handleChange}
 						/>
 					</label>
 					<label className="flex items-center gap-1  w-full">
@@ -108,15 +119,25 @@ const ProjectBox = ({ repo }: { repo: Repository }) => {
 						<input
 							type="date"
 							className="text-sm font-semibold "
-							value={startDate ?? ''}
-							onChange={handleChange(setStartDate)}
+							name="startDate"
+							value={
+								startDate != undefined
+									? DateToInputDate(new Date(startDate))
+									: ''
+							}
+							onChange={handleChange}
 						/>
 						~
 						<input
 							type="date"
+							name="updateDate"
 							className="text-sm font-semibold "
-							value={endDate ?? ''}
-							onChange={handleChange(setEndDate)}
+							value={
+								updateDate != undefined
+									? DateToInputDate(new Date(updateDate))
+									: ''
+							}
+							onChange={handleChange}
 						/>
 					</label>
 					<label className="flex items-center gap-1">
@@ -128,7 +149,8 @@ const ProjectBox = ({ repo }: { repo: Repository }) => {
 						<input
 							className="text-sm font-semibold w-full"
 							value={gitUrl ?? ''}
-							onChange={handleChange(setGitUrl)}
+							name="gitUrl"
+							onChange={handleChange}
 						/>
 					</label>
 					<label className="flex items-center gap-1">
@@ -140,7 +162,8 @@ const ProjectBox = ({ repo }: { repo: Repository }) => {
 						<input
 							className="text-sm font-semibold w-full"
 							value={webUrl ?? ''}
-							onChange={handleChange(setWebUrl)}
+							name="webUrl"
+							onChange={handleChange}
 						/>
 					</label>
 					<div
@@ -164,7 +187,7 @@ const ProjectBox = ({ repo }: { repo: Repository }) => {
 								width: '100%',
 								padding: '4px',
 							}}>
-							{languages.map((language, index) => (
+							{/* {languages.map((language, index) => (
 								<button
 									key={language.name}
 									onClick={() => handleRemoveLanguage(language)}
@@ -181,7 +204,7 @@ const ProjectBox = ({ repo }: { repo: Repository }) => {
 									{language.name}
 									<HighlightOffIcon fontSize="small" />
 								</button>
-							))}
+							))} */}
 						</div>
 					</div>
 					<div
@@ -192,7 +215,7 @@ const ProjectBox = ({ repo }: { repo: Repository }) => {
 							width: '100%',
 							padding: '4px',
 						}}>
-						{languageColors
+						{/* {languageColors
 							.filter((val) => {
 								return (
 									languages.find(
@@ -214,7 +237,7 @@ const ProjectBox = ({ repo }: { repo: Repository }) => {
 										{value.name}
 									</button>
 								</span>
-							))}
+							))} */}
 					</div>
 				</div>
 			) : (
@@ -225,7 +248,8 @@ const ProjectBox = ({ repo }: { repo: Repository }) => {
 						<h1 className="text-md font-semibold ">{title} </h1>
 						<h1 className="text-sm font-semibold ">{description} </h1>
 						<h3 className="text-xs font-bold">
-							{startDate} ~ {endDate == '' ? '진행중' : endDate}
+							{startDate ? DateToInputDate(new Date(startDate)) : ''} ~{' '}
+							{updateDate ? DateToInputDate(new Date(updateDate)) : '진행중'}
 						</h3>
 						<div className="flex gap-2 text-sm font-medium"></div>
 						<a
@@ -249,7 +273,7 @@ const ProjectBox = ({ repo }: { repo: Repository }) => {
 							flexWrap: 'wrap',
 							gap: '2px',
 						}}>
-						{languages.map((language, index) => (
+						{/* {languages.map((language, index) => (
 							<div
 								key={language.name}
 								className="rounded-lg w-fit  "
@@ -262,7 +286,7 @@ const ProjectBox = ({ repo }: { repo: Repository }) => {
 								}}>
 								{language.name}
 							</div>
-						))}
+						))} */}
 					</div>
 				</div>
 			)}
@@ -271,11 +295,12 @@ const ProjectBox = ({ repo }: { repo: Repository }) => {
 };
 
 const ProjectEdit = () => {
-	const [repository, setRepository] = useState<Repository[] | undefined>();
+	const { user, updateProject } = usePortfolioStore();
 
-	const handleRemoveRepository = (repo: Repository) => {
-		const tmpRepo = repository?.filter((val) => val.id != repo.id);
-		setRepository(tmpRepo);
+	const handleClickHide = (project: DBProjectModule) => {
+		const tmpProject = { ...project, ['hide']: !project.hide };
+		console.log('hello');
+		updateProject(tmpProject);
 	};
 
 	return (
@@ -285,19 +310,23 @@ const ProjectEdit = () => {
 				<div className="w-full bg-gray-100  h-[2px]" />
 			</div>
 			<div className="project_grid">
-				{repository?.map((repo, index) => (
+				{user.portfolio?.projects?.map((project, index) => (
 					<div
-						key={repo.id}
-						style={{ overflow: 'auto' }}
+						key={project.id}
+						style={{
+							overflow: 'auto',
+							opacity: project.hide ? 0.4 : 1,
+							color: 'black',
+						}}
 						className="w-full p-2 ">
 						<button
-							className="font-thin text-gray-500 text-sm hover:scale-95 active:scale-90 transition-all"
-							onClick={() => handleRemoveRepository(repo)}>
-							숨기기
+							className=" text-sm hover:scale-95 active:scale-90 transition-all"
+							onClick={() => handleClickHide(project)}>
+							{project.hide ? '보이기' : '숨기기'}
 						</button>
 						<ProjectBox
-							repo={repo}
-							key={repo.id}
+							repo={project}
+							key={project.id}
 						/>
 					</div>
 				))}

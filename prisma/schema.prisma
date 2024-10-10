@@ -1,0 +1,139 @@
+//npx prisma studio   - 관리자 페이지
+// npx prisma migrate dev --name 
+datasource db {
+  provider  = "postgres"
+  url       = env("AUTH_POSTGRES_PRISMA_URL")
+  directUrl = env("AUTH_POSTGRES_URL_NON_POOLING")
+}
+
+generator client {
+  provider        = "prisma-client-js"
+  previewFeatures = ["driverAdapters"]
+}
+
+model User {
+  id            String    @id @default(cuid())
+  name          String?
+  email         String    @unique
+  emailVerified DateTime?
+  image         String?
+  accounts      Account[]
+  sessions      Session[]
+  portfolio     Portfolio?
+}
+
+model Account {
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([provider, providerAccountId])
+}
+
+
+model Session {
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@id([identifier, token])
+}
+
+model Portfolio {
+  id          String   @id @default(cuid())
+  introduce   Introduce?
+  urls        Url[]
+  careers     Career[]
+  skills      Skill[]
+  projects    Project[]
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId String @unique
+}
+
+model Introduce {
+  id          String   @id @default(cuid())
+  introduce   String 
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  portFolio Portfolio @relation(fields: [id], references: [id], onDelete: Cascade) 
+}
+
+model Url{
+   id          String   @id @default(cuid())
+   displayName String?
+   url        String 
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+   portFolio Portfolio @relation(fields: [id], references: [id], onDelete: Cascade)
+}
+
+model Career{
+   id          String   @id @default(cuid())
+   companyName String
+   entryDate   DateTime 
+  quitDate   DateTime?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+   portFolio Portfolio @relation(fields: [id], references: [id], onDelete: Cascade)
+}
+
+model Skill {
+   id          String   @id @default(cuid())
+   type         String
+   content      String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+   portFolio Portfolio @relation(fields: [id], references: [id], onDelete: Cascade)
+}
+
+model Project {
+  id          String   @id @default(cuid())
+  title       String
+  description String
+  startDate   DateTime 
+  updateDate  DateTime
+  gitUrl      String
+  webUrl      String?
+  // stacks      ProjectStack[] 
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  hide        Boolean @default(false)
+  portFolio   Portfolio @relation(fields: [id], references: [id], onDelete: Cascade)
+}
+
+// model Stack {
+//   id    String  @id @default(cuid())
+//   type  String
+//   name  String
+//   color String
+//   icon  String?
+//   projects ProjectStack[] 
+// }
+
+// model ProjectStack {
+//   project   Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+//   projectId String
+//   stack     Stack  @relation(fields: [stackId], references: [id], onDelete: Cascade)
+//   stackId   String
+//   @@id([projectId, stackId]) 
+// }

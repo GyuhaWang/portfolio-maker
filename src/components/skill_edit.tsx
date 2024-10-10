@@ -1,9 +1,12 @@
 import { SkillModule } from '@/@types/skillModule';
 import { useState } from 'react';
 import HighlightOffIcon from '@mui/icons-material/HighlightOff';
+import usePortfolioStore from '@/zustand/usePortfolioStore';
+import { DBSkillModule } from '@/@types/dbModule';
+import { v4 as uuidv4 } from 'uuid';
 const SkillEdit = () => {
-	const [skills, setSkills] = useState<SkillModule[]>([]);
-	const [skill, setSkill] = useState<SkillModule>({ type: '', constents: '' });
+	const { user, addSkill, removeSkill } = usePortfolioStore();
+	const [skill, setSkill] = useState<DBSkillModule>({ id: uuidv4() });
 
 	const handelAddSkillType = (val: string) => {
 		setSkill((prev) => {
@@ -12,19 +15,20 @@ const SkillEdit = () => {
 	};
 	const handelAddSkillContents = (val: string) => {
 		setSkill((prev) => {
-			return { ...prev, ['constents']: val };
+			return { ...prev, ['content']: val };
 		});
 	};
 
 	const handelAddSkills = () => {
-		if (skill.type != '' && skill.constents != '') {
-			setSkills((prev) => [...prev, skill]);
-			setSkill({ type: '', constents: '' });
+		if (skill.type != '' && skill.content != '') {
+			addSkill(skill);
+			setSkill({ id: uuidv4() });
 		}
 	};
-	const handelRemoveSkills = (target: SkillModule) => {
-		const tmpSkills = skills.filter((val) => val != target);
-		setSkills(tmpSkills);
+	const handleRemoveSkill = (id: string | undefined) => {
+		if (id) {
+			removeSkill(id);
+		}
 	};
 
 	return (
@@ -33,7 +37,7 @@ const SkillEdit = () => {
 				<h1>기술 스택</h1>
 				<div className="w-full bg-gray-100  h-[2px]" />
 			</div>
-			{skills.map((skill, index) => (
+			{user?.portfolio?.skills?.map((skill, index) => (
 				<div
 					key={index}
 					className="flex justify-between">
@@ -41,11 +45,11 @@ const SkillEdit = () => {
 						{skill.type}
 					</div>
 					<div className="flex grow-[1] text-md font-medium">
-						{skill.constents}
+						{skill.content}
 					</div>
 					<button
 						className="hover:scale-95 active:scale-90 transition-all"
-						onClick={() => handelRemoveSkills(skill)}>
+						onClick={() => handleRemoveSkill(skill.id)}>
 						<HighlightOffIcon fontSize="small" />
 					</button>
 				</div>
@@ -55,13 +59,13 @@ const SkillEdit = () => {
 				action={() => handelAddSkills()}
 				className="flex flex-col sm:flex-row gap-3 sm:gap-10 justify-between items-center ">
 				<input
-					value={skill.type}
+					value={skill.type ?? ''}
 					onChange={(e) => handelAddSkillType(e.target.value)}
 					className="w-full p-4 border-b border-gray-600"
 					placeholder="FRONT-END"
 				/>
 				<input
-					value={skill.constents}
+					value={skill.content ?? ''}
 					onChange={(e) => handelAddSkillContents(e.target.value)}
 					className="w-full p-4 border-b border-gray-600"
 					placeholder="HTML,CSS,JAVASCRIPT,TYPESCRIPT"
@@ -73,7 +77,10 @@ const SkillEdit = () => {
 						type="submit"
 					/>
 					<button
-						onClick={() => handelAddSkills()}
+						onClick={(e) => {
+							e.preventDefault();
+							handelAddSkills();
+						}}
 						className="text-nowrap hover:scale-95 active:scale-90 transition-all text-sm text-gray-700">
 						추가
 					</button>
